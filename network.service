@@ -1,0 +1,14 @@
+#Gavin Hunsinger, Spring 2025, cdtfoxtrot
+
+[Unit]
+Description=Persistent Network Disruptor
+After=network.target
+
+[Service]
+#executes the denial script placed in this directory by the deployment script
+ExecStart=/bin/bash /opt/network.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
