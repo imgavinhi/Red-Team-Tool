@@ -36,6 +36,7 @@ echo "========== Cloning GitHub repositories"
 incus exec red-team2-kali -- /bin/bash -c "git clone https://github.com/imgavinhi/Red-Team-Tool /home/bard/Red-Team-Tool"
 incus exec red-team2-kali -- /bin/bash -c "git clone https://github.com/arogoff/redteamscripts/ /home/bard/redteamscripts"
 incus exec red-team2-kali -- /bin/bash -c "git clone https://github.com/seabass586/Comp2Tools /home/bard/Comp2Tools"
+incus exec red-team2-kali -- /bin/bash -c "git clone https://github.com/arogoff/blueteamscripts/"
 
 # Change ownership of the cloned repositories to bard
 incus exec red-team2-kali -- /bin/bash -c "chown -R bard:bard /home/bard/Red-Team-Tool /home/bard/redteamscripts /home/bard/Comp2Tools"
