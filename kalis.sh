@@ -5,7 +5,7 @@ incus stop red-team2-kali 2>/dev/null || true
 incus delete red-team2-kali 2>/dev/null || true
 
 # Creates the network for the container
-incus network create r2-kali-test network=UPLINK ipv4.address=192.168.47.1/24 ipv4.nat=true ipv6.address=none ipv6.nat=false
+#incus network create r2-kali-test network=UPLINK ipv4.address=192.168.47.1/24 ipv4.nat=true ipv6.address=none ipv6.nat=false
 
 # Initializes the Kali container with a specific IP address and disk size
 incus init images:kali red-team2-kali -t c2-m6 --network r2-kali-test -d eth0,ipv4.address=192.168.47.50 -d root,size=320GiB
@@ -17,7 +17,7 @@ incus start red-team2-kali
 # Setup Kali container (install basic tools)
 echo "========== Setting up red-team2-kali"
 incus exec red-team2-kali -- /bin/bash -c "apt update"
-incus exec red-team2-kali -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework kali-win-kex iputils-ping'
+incus exec red-team2-kali -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework kali-win-kex iputils-ping xrdp'
 
 # Add a new user 'bard'
 echo "========== Creating new user bard"
