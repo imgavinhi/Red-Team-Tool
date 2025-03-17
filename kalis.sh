@@ -20,7 +20,7 @@ incus start red-team2-kali
 # Setup Kali container (install basic tools)
 echo "========== Setting up red-team2-kali"
 incus exec red-team2-kali -- /bin/bash -c "apt update"
-incus exec red-team2-kali -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework'
+incus exec red-team2-kali -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework kali-win-kex'
 
 # Add a new user 'bard'
 echo "========== Creating new user bard"
