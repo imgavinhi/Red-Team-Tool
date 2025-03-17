@@ -4,9 +4,6 @@
 incus stop red-team2-kali 2>/dev/null || true
 incus delete red-team2-kali 2>/dev/null || true
 
-# Removes the network if it exists
-incus network rm r2-kali-test 2>/dev/null || true
-
 # Creates the network for the container
 incus network create r2-kali-test network=UPLINK ipv4.address=192.168.47.1/24 ipv4.nat=true ipv6.address=none ipv6.nat=false
 
