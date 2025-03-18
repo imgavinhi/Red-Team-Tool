@@ -1,117 +1,89 @@
 #!/bin/bash
+# Number of Kali machines to create
+NUM_MACHINES=2 #Change to 5 for comp
+# Base IP for the containers (first machine will be at 192.168.47.50)
+BASE_IP=50
 
-# Stops and deletes containers if they exist
-incus stop red-team2-kali1 2>/dev/null || true
-incus delete red-team2-kali1 2>/dev/null || true
+# Stop and delete any existing containers
+for i in $(seq 1 $NUM_MACHINES); do
+    CONTAINER="red-team2-kali${i}"
+    echo "Stopping and deleting container: $CONTAINER"
+    incus stop "$CONTAINER" 2>/dev/null || true
+    incus delete "$CONTAINER" 2>/dev/null || true
+done
 
-incus stop red-team2-kali2 2>/dev/null || true
-incus delete red-team2-kali2 2>/dev/null || true
+# Optionally, create the network if needed (uncomment the next line if required)
+# incus network create r2-kali-test network=UPLINK ipv4.address=192.168.47.1/24 ipv4.nat=true ipv6.address=none ipv6.nat=false
+# incus network create testing-for-comp network=UPLINK ipv4.address=192.168.47.1/24 ipv4.nat=true ipv6.address=none ipv6.nat=false
 
-incus stop red-team2-kali3 2>/dev/null || true
-incus delete red-team2-kali3 2>/dev/null || true
+# Initialize containers with unique IP addresses
+for i in $(seq 1 $NUM_MACHINES); do
+    CONTAINER="red-team2-kali${i}"
+    IP="192.168.47.$((BASE_IP + i - 1))"
+    echo "Initializing container: $CONTAINER with IP $IP"
+    #incus init images:kali "$CONTAINER" -t c2-m6 --network r2-kali-test -d eth0,ipv4.address="${IP}" -d root,size=320GiB
+    incus init images:kali "$CONTAINER" -t c2-m6 --network testing-for-comp -d eth0,ipv4.address="${IP}" -d root,size=320GiB
+done
 
-incus stop red-team2-kali4 2>/dev/null || true
-incus delete red-team2-kali4 2>/dev/null || true
+# Start containers
+echo "========== Starting Kali VMs =========="
+for i in $(seq 1 $NUM_MACHINES); do
+    CONTAINER="red-team2-kali${i}"
+    incus start "$CONTAINER"
+done
 
-incus stop red-team2-kali5 2>/dev/null || true
-incus delete red-team2-kali5 2>/dev/null || true
+# Update and install packages on each container
+echo "========== Setting up Kali VMs =========="
+for i in $(seq 1 $NUM_MACHINES); do
+    CONTAINER="red-team2-kali${i}"
+    incus exec "$CONTAINER" -- /bin/bash -c "apt update"
+    incus exec "$CONTAINER" -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework iputils-ping'
+done
 
-# Creates the network for the container
-#incus network create r2-kali-test network=UPLINK ipv4.address=192.168.47.1/24 ipv4.nat=true ipv6.address=none ipv6.nat=false
+# Create a new user 'bard' and set its password
+echo "========== Creating new user 'bard' =========="
+for i in $(seq 1 $NUM_MACHINES); do
+    CONTAINER="red-team2-kali${i}"
+    incus exec "$CONTAINER" -- /bin/bash -c "useradd -m -s /bin/bash bard"
+    incus exec "$CONTAINER" -- /bin/bash -c "echo 'bard:bard' | chpasswd"
+done
 
-# Initializes the Kali container with a specific IP address and disk size
-incus init images:kali red-team2-kali1 -t c2-m6 --network r2-kali-test -d eth0,ipv4.address=192.168.47.50 -d root,size=320GiB
-incus init images:kali red-team2-kali2 -t c2-m6 --network r2-kali-test -d eth0,ipv4.address=192.168.47.51 -d root,size=320GiB
-incus init images:kali red-team2-kali3 -t c2-m6 --network r2-kali-test -d eth0,ipv4.address=192.168.47.52 -d root,size=320GiB
-incus init images:kali red-team2-kali4 -t c2-m6 --network r2-kali-test -d eth0,ipv4.address=192.168.47.53 -d root,size=320GiB
-incus init images:kali red-team2-kali5 -t c2-m6 --network r2-kali-test -d eth0,ipv4.address=192.168.47.54 -d root,size=320GiB
+# Add 'bard' to the sudo group on each container
+echo "========== Adding 'bard' to sudo group =========="
+for i in $(seq 1 $NUM_MACHINES); do
+    CONTAINER="red-team2-kali${i}"
+    incus exec "$CONTAINER" -- /bin/bash -c "usermod -aG sudo bard"
+done
 
-# Starts the Kali container
-echo "========== Start Kali VM"
-incus start red-team2-kali1
-incus start red-team2-kali2
-incus start red-team2-kali3
-incus start red-team2-kali4
-incus start red-team2-kali5
+# Clone GitHub repositories into the home directory of user 'bard'
+echo "========== Cloning GitHub repositories =========="
+for i in $(seq 1 $NUM_MACHINES); do
+    CONTAINER="red-team2-kali${i}"
+    incus exec "$CONTAINER" -- /bin/bash -c "git clone https://github.com/imgavinhi/Red-Team-Tool /home/bard/Red-Team-Tool"
+    incus exec "$CONTAINER" -- /bin/bash -c "git clone https://github.com/arogoff/redteamscripts/ /home/bard/redteamscripts"
+    incus exec "$CONTAINER" -- /bin/bash -c "git clone https://github.com/seabass586/Comp2Tools /home/bard/Comp2Tools"
+    incus exec "$CONTAINER" -- /bin/bash -c "git clone https://github.com/arogoff/blueteamscripts/ /home/bard/blueteamscripts"
+done
 
-# Setup Kali container (install basic tools)
-echo "========== Setting up red-team2-kali"
-incus exec red-team2-kali1 -- /bin/bash -c "apt update"
-incus exec red-team2-kali1 -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework kali-win-kex iputils-ping xrdp'
-incus exec red-team2-kali2 -- /bin/bash -c "apt update"
-incus exec red-team2-kali2 -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework kali-win-kex iputils-ping xrdp'
-incus exec red-team2-kali3 -- /bin/bash -c "apt update"
-incus exec red-team2-kali3 -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework kali-win-kex iputils-ping xrdp'
-incus exec red-team2-kali4 -- /bin/bash -c "apt update"
-incus exec red-team2-kali4 -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework kali-win-kex iputils-ping xrdp'
-incus exec red-team2-kali5 -- /bin/bash -c "apt update"
-incus exec red-team2-kali5 -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework kali-win-kex iputils-ping xrdp'
+# Change ownership of the cloned repositories to the 'bard' user
+echo "========== Changing ownership of cloned repositories =========="
+for i in $(seq 1 $NUM_MACHINES); do
+    CONTAINER="red-team2-kali${i}"
+    incus exec "$CONTAINER" -- /bin/bash -c "chown -R bard:bard /home/bard/Red-Team-Tool /home/bard/redteamscripts /home/bard/Comp2Tools /home/bard/blueteamscripts"
+done
 
-# Add a new user 'bard'
-echo "========== Creating new user bard"
-incus exec red-team2-kali1 -- /bin/bash -c "useradd -m -s /bin/bash bard"
-incus exec red-team2-kali1 -- /bin/bash -c "echo 'bard:bard' | chpasswd" # Set password for bard
-incus exec red-team2-kali2 -- /bin/bash -c "useradd -m -s /bin/bash bard"
-incus exec red-team2-kali2 -- /bin/bash -c "echo 'bard:bard' | chpasswd" # Set password for bard
-incus exec red-team2-kali3 -- /bin/bash -c "useradd -m -s /bin/bash bard"
-incus exec red-team2-kali3 -- /bin/bash -c "echo 'bard:bard' | chpasswd" # Set password for bard
-incus exec red-team2-kali4 -- /bin/bash -c "useradd -m -s /bin/bash bard"
-incus exec red-team2-kali4 -- /bin/bash -c "echo 'bard:bard' | chpasswd" # Set password for bard
-incus exec red-team2-kali5 -- /bin/bash -c "useradd -m -s /bin/bash bard"
-incus exec red-team2-kali5 -- /bin/bash -c "echo 'bard:bard' | chpasswd" # Set password for bard
+# Add a login message for the root user
+echo "========== Adding login message for root user =========="
+for i in $(seq 1 $NUM_MACHINES); do
+    CONTAINER="red-team2-kali${i}"
+    incus exec "$CONTAINER" -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS ROOT IN red-team2-kali' >> /root/.bashrc"
+done
 
-# Add the new user to the sudo group
-echo "========== Adding 'bard' to sudo group"
-incus exec red-team2-kali -- /bin/bash -c "usermod -aG sudo bard"
+# Add a login message for the 'bard' user
+echo "========== Adding login message for bard user =========="
+for i in $(seq 1 $NUM_MACHINES); do
+    CONTAINER="red-team2-kali${i}"
+    incus exec "$CONTAINER" -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS bard IN red-team2-kali' >> /home/bard/.bashrc"
+done
 
-# Cloning GitHub repositories
-echo "========== Cloning GitHub repositories"
-incus exec red-team2-kali1 -- /bin/bash -c "git clone https://github.com/imgavinhi/Red-Team-Tool /home/bard/Red-Team-Tool"
-incus exec red-team2-kali1 -- /bin/bash -c "git clone https://github.com/arogoff/redteamscripts/ /home/bard/redteamscripts"
-incus exec red-team2-kali1 -- /bin/bash -c "git clone https://github.com/seabass586/Comp2Tools /home/bard/Comp2Tools"
-incus exec red-team2-kali1 -- /bin/bash -c "git clone https://github.com/arogoff/blueteamscripts/ /home/bard/blueteamscripts"
-
-incus exec red-team2-kali2 -- /bin/bash -c "git clone https://github.com/imgavinhi/Red-Team-Tool /home/bard/Red-Team-Tool"
-incus exec red-team2-kali2 -- /bin/bash -c "git clone https://github.com/arogoff/redteamscripts/ /home/bard/redteamscripts"
-incus exec red-team2-kali2 -- /bin/bash -c "git clone https://github.com/seabass586/Comp2Tools /home/bard/Comp2Tools"
-incus exec red-team2-kali2 -- /bin/bash -c "git clone https://github.com/arogoff/blueteamscripts/ /home/bard/blueteamscripts"
-
-incus exec red-team2-kali3 -- /bin/bash -c "git clone https://github.com/imgavinhi/Red-Team-Tool /home/bard/Red-Team-Tool"
-incus exec red-team2-kali3 -- /bin/bash -c "git clone https://github.com/arogoff/redteamscripts/ /home/bard/redteamscripts"
-incus exec red-team2-kali3 -- /bin/bash -c "git clone https://github.com/seabass586/Comp2Tools /home/bard/Comp2Tools"
-incus exec red-team2-kali3 -- /bin/bash -c "git clone https://github.com/arogoff/blueteamscripts/ /home/bard/blueteamscripts"
-
-incus exec red-team2-kali4 -- /bin/bash -c "git clone https://github.com/imgavinhi/Red-Team-Tool /home/bard/Red-Team-Tool"
-incus exec red-team2-kali4 -- /bin/bash -c "git clone https://github.com/arogoff/redteamscripts/ /home/bard/redteamscripts"
-incus exec red-team2-kali4 -- /bin/bash -c "git clone https://github.com/seabass586/Comp2Tools /home/bard/Comp2Tools"
-incus exec red-team2-kali4 -- /bin/bash -c "git clone https://github.com/arogoff/blueteamscripts/ /home/bard/blueteamscripts"
-
-incus exec red-team2-kali5 -- /bin/bash -c "git clone https://github.com/imgavinhi/Red-Team-Tool /home/bard/Red-Team-Tool"
-incus exec red-team2-kali5 -- /bin/bash -c "git clone https://github.com/arogoff/redteamscripts/ /home/bard/redteamscripts"
-incus exec red-team2-kali5 -- /bin/bash -c "git clone https://github.com/seabass586/Comp2Tools /home/bard/Comp2Tools"
-incus exec red-team2-kali5 -- /bin/bash -c "git clone https://github.com/arogoff/blueteamscripts/ /home/bard/blueteamscripts"
-
-# Change ownership of the cloned repositories to bard
-incus exec red-team2-kali1 -- /bin/bash -c "chown -R bard:bard /home/bard/Red-Team-Tool /home/bard/redteamscripts /home/bard/Comp2Tools /home/bard/blueteamscripts"
-incus exec red-team2-kali2 -- /bin/bash -c "chown -R bard:bard /home/bard/Red-Team-Tool /home/bard/redteamscripts /home/bard/Comp2Tools /home/bard/blueteamscripts"
-incus exec red-team2-kali3 -- /bin/bash -c "chown -R bard:bard /home/bard/Red-Team-Tool /home/bard/redteamscripts /home/bard/Comp2Tools /home/bard/blueteamscripts"
-incus exec red-team2-kali4 -- /bin/bash -c "chown -R bard:bard /home/bard/Red-Team-Tool /home/bard/redteamscripts /home/bard/Comp2Tools /home/bard/blueteamscripts"
-incus exec red-team2-kali5 -- /bin/bash -c "chown -R bard:bard /home/bard/Red-Team-Tool /home/bard/redteamscripts /home/bard/Comp2Tools /home/bard/blueteamscripts"
-
-# Add a basic message for the root user
-echo "========== Adding message for root user"
-incus exec red-team2-kali1 -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS ROOT IN red-team2-kali' >> /root/.bashrc"
-incus exec red-team2-kali2 -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS ROOT IN red-team2-kali' >> /root/.bashrc"
-incus exec red-team2-kali3 -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS ROOT IN red-team2-kali' >> /root/.bashrc"
-incus exec red-team2-kali4 -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS ROOT IN red-team2-kali' >> /root/.bashrc"
-incus exec red-team2-kali5 -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS ROOT IN red-team2-kali' >> /root/.bashrc"
-
-# Add a basic message for the bard user
-echo "========== Adding message for bard user"
-incus exec red-team2-kali1 -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS bard IN red-team2-kali' >> /home/bard/.bashrc"
-incus exec red-team2-kali2 -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS bard IN red-team2-kali' >> /home/bard/.bashrc"
-incus exec red-team2-kali3 -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS bard IN red-team2-kali' >> /home/bard/.bashrc"
-incus exec red-team2-kali4 -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS bard IN red-team2-kali' >> /home/bard/.bashrc"
-incus exec red-team2-kali5 -- /bin/bash -c "echo 'reset; echo YOU ARE LOGGED IN AS bard IN red-team2-kali' >> /home/bard/.bashrc"
-
-echo "========== Setup complete."
+echo "========== Setup complete. =========="
