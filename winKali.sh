@@ -65,7 +65,7 @@ echo "========== Setting up Kali VMs =========="
 for i in $(seq 1 $NUM_MACHINES); do
     CONTAINER="red-team2-kali${i}"
     incus exec "$CONTAINER" -- /bin/bash -c "apt update"
-    incus exec "$CONTAINER" -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework iputils-ping'
+    incus exec "$CONTAINER" -- /bin/bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools git python3 nmap metasploit-framework iputils-ping openvas man-db'
 done
 
 # Create a new user 'bard' and set its password on Kali containers
@@ -91,13 +91,14 @@ for i in $(seq 1 $NUM_MACHINES); do
     incus exec "$CONTAINER" -- /bin/bash -c "git clone https://github.com/arogoff/redteamscripts/ /home/bard/redteamscripts"
     incus exec "$CONTAINER" -- /bin/bash -c "git clone https://github.com/seabass586/Comp2Tools /home/bard/Comp2Tools"
     incus exec "$CONTAINER" -- /bin/bash -c "git clone https://github.com/arogoff/blueteamscripts/ /home/bard/blueteamscripts"
+    incus exec "$CONTAINER" -- /bin/bash -c "git clone https://github.com/nmt1761/srirachaRed/ /home/bard/srirachaRed"
 done
 
 # Change ownership of the cloned repositories to the 'bard' user on Kali containers
 echo "========== Changing ownership of cloned repositories =========="
 for i in $(seq 1 $NUM_MACHINES); do
     CONTAINER="red-team2-kali${i}"
-    incus exec "$CONTAINER" -- /bin/bash -c "chown -R bard:bard /home/bard/Red-Team-Tool /home/bard/redteamscripts /home/bard/Comp2Tools /home/bard/blueteamscripts"
+    incus exec "$CONTAINER" -- /bin/bash -c "chown -R bard:bard /home/bard/Red-Team-Tool /home/bard/redteamscripts /home/bard/Comp2Tools /home/bard/blueteamscripts /home/bard/srirachaRed"
 done
 
 # Add a login message for the root user on Kali containers
