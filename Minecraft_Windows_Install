@@ -1,0 +1,52 @@
+# PowerShell Script to Install Minecraft and Set Up a Local Server
+
+# Set variables
+$MinecraftInstaller = "MinecraftInstaller.msi"
+$MinecraftURL = "https://launcher.mojang.com/download/MinecraftInstaller.msi"
+$ServerDir = "$env:USERPROFILE\MinecraftServer"
+$ServerJar = "$ServerDir\server.jar"
+$EULAFile = "$ServerDir\eula.txt"
+
+# Function to check if Java is installed
+function Check-Java {
+    try {
+        $javaVersion = java -version 2>&1
+        if ($javaVersion -match "version") {
+            Write-Output "Java is already installed."
+            return $true
+        }
+    } catch {
+        Write-Output "Java is not installed."
+    }
+    return $false
+}
+
+# Install Java if not installed
+if (-not (Check-Java)) {
+    Write-Output "Installing Java..."
+    winget install EclipseAdoptium.Temurin.17.JDK -e
+}
+
+# Download and install Minecraft Launcher
+Write-Output "Downloading Minecraft Installer..."
+Invoke-WebRequest -Uri $MinecraftURL -OutFile $MinecraftInstaller
+Write-Output "Installing Minecraft..."
+Start-Process msiexec.exe -ArgumentList "/i $MinecraftInstaller /quiet /norestart" -Wait
+Remove-Item $MinecraftInstaller -Force
+
+# Create Minecraft Server Directory
+if (!(Test-Path $ServerDir)) {
+    New-Item -ItemType Directory -Path $ServerDir
+}
+
+# Get the latest Minecraft server JAR URL
+Write-Output "Fetching latest Minecraft server JAR..."
+$ManifestURL = "https://launchermeta.mojang.com/mc/game/version_manifest.json"
+$Manifest = Invoke-RestMethod -Uri $ManifestURL
+$LatestVersion = $Manifest.latest.release
+$VersionInfo = $Manifest.versions | Where-Object { $_.id -eq $LatestVersion }
+$ServerDownloadURL = (Invoke-RestMethod -Uri $VersionInfo.url).downloads.server.url
+
+# Download the latest Minecraft Server
+Write-Output "Downloading Minecraft Server..."
+Invoke-WebRequest -Uri $ServerDownloadURL -OutFile $ServerJar
