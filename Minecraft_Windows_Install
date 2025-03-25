@@ -1,4 +1,5 @@
 # PowerShell Script to Install Minecraft and Set Up a Local Server
+#https://prismlauncher.org/
 
 # Set variables
 $MinecraftInstaller = "MinecraftInstaller.msi"
