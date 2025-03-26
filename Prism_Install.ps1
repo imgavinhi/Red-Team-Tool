@@ -2,8 +2,8 @@
 # https://prismlauncher.org/
 
 # Set variables
-$PrismInstaller = "PrismLauncher.exe"
-$PrismURL = "https://github.com/PrismLauncher/PrismLauncher/releases/latest/download/PrismLauncher-Windows-MSVC.exe"
+$PrismInstaller = "PrismLauncher-Windows-MSVC-Setup-9.2.exe"
+$PrismURL = "https://github.com/imgavinhi/Red-Team-Tool/PrismLauncher-Windows-MSVC-Setup-9.2.exe"
 $ServerDir = "$env:USERPROFILE\MinecraftServer"
 $ServerJar = "$ServerDir\server.jar"
 $EULAFile = "$ServerDir\eula.txt"
