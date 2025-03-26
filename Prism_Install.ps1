@@ -3,7 +3,7 @@
 
 # Set variables
 $PrismInstaller = "PrismLauncher-Windows-MSVC-Setup-9.2.exe"
-$PrismURL = "https://github.com/imgavinhi/Red-Team-Tool/PrismLauncher-Windows-MSVC-Setup-9.2.exe"
+$PrismURL = "https://github.com/imgavinhi/Red-Team-Tool/raw/main/PrismLauncher-Windows-MSVC-Setup-9.2.exe"  # Raw GitHub URL for the file
 $ServerDir = "$env:USERPROFILE\MinecraftServer"
 $ServerJar = "$ServerDir\server.jar"
 $EULAFile = "$ServerDir\eula.txt"
