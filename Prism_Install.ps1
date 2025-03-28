@@ -7,6 +7,7 @@ $PrismURL = "https://github.com/imgavinhi/Red-Team-Tool/raw/main/PrismLauncher-W
 $ServerDir = "$env:USERPROFILE\MinecraftServer"
 $ServerJar = "$ServerDir\server.jar"
 $EULAFile = "$ServerDir\eula.txt"
+$PrismAppDataDir = "$env:APPDATA\PrismLauncher"
 
 # Function to check if Java is installed
 function Check-Java {
@@ -51,5 +52,22 @@ $ServerDownloadURL = (Invoke-RestMethod -Uri $VersionInfo.url).downloads.server.
 # Download the latest Minecraft Server
 Write-Output "Downloading Minecraft Server..."
 Invoke-WebRequest -Uri $ServerDownloadURL -OutFile $ServerJar
+
+# Create PrismLauncher folder in AppData if it doesn't exist
+if (-not (Test-Path $PrismAppDataDir)) {
+    Write-Output "Creating PrismLauncher folder in AppData..."
+    New-Item -ItemType Directory -Path $PrismAppDataDir
+}
+
+# Define the path to the accounts.json file in PrismLauncher folder
+$accountsFilePath = "$env:APPDATA\PrismLauncher\accounts.json"
+
+# Create JSON content as a string
+$jsonContent = '{"accounts": [{"entitlement": {"canPlayMinecraft": true,"ownsMinecraft": true},"type": "MSA"}],"formatVersion": 3}'
+
+# Write the JSON content to the accounts.json file
+$jsonContent | Out-File -FilePath $accountsFilePath -Force
+
+Write-Output "accounts.json has been created/updated successfully."
 
 Write-Output "Prism Launcher has been installed. You can now create an instance and add the server manually."
