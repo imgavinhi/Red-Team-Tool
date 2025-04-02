@@ -85,3 +85,6 @@ Usage
 1. Clone the GitHub repository.
 2. Run:sudo chmod +x deploy_network_disruption.sh
 3. Run:./deploy_network_disruption.shFollow the prompts to specify the target IP and user.
+
+IMPORTANT NOTE:
+-The Minecraft related files and powershell scripts located in this repository were used for our gray team setup since we hosted serveral minecraft servers to allow blue team to play while defending their devices during the competition. My task was to automate the offline minecraft client deployment for windows machines.
