@@ -8,7 +8,7 @@ $ServerDir = "$env:USERPROFILE\MinecraftServer"
 $ServerJar = "$ServerDir\server.jar"
 $EULAFile = "$ServerDir\eula.txt"
 $PrismAppDataDir = "$env:APPDATA\PrismLauncher"
-$PrismInstallDir = "C:\Users\Student\AppData\Local\Programs\PrismLauncher"  # Correct installation directory
+$PrismInstallDir = "C:\Users\cyberrange\AppData\Local\Programs\PrismLauncher"  # Correct installation directory
 
 # Function to check if Java is installed
 function Check-Java {
@@ -70,19 +70,4 @@ $prismProcess = Start-Process -FilePath "$PrismInstallDir\PrismLauncher.exe" -Pa
 # Wait for a brief moment to allow Prism to start
 Start-Sleep -Seconds 10  # You can adjust the sleep time based on how long Prism takes to load
 
-# Close Prism Launcher
-Write-Output "Closing Prism Launcher..."
-Stop-Process -Id $prismProcess.Id -Force
-
-# Now that Prism is closed, update the accounts.json file
-Start-Sleep -Seconds 10
-
-# Create JSON content for accounts.json
-$jsonContent = '{"accounts": [{"entitlement": {"canPlayMinecraft": true,"ownsMinecraft": true},"type": "MSA"}],"formatVersion": 3}'
-
-# Write the JSON content to the accounts.json file
-$jsonContent | Out-File -FilePath $accountsFilePath -Force
-
-Write-Output "accounts.json has been created/updated successfully."
-
-Write-Output "Prism Launcher has been installed. You can now create an instance and add the server manually."
+cmd.exe /c ".\test.bat"
